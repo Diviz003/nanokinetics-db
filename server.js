@@ -1,100 +1,84 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
+const mysql = require('mysql2');
 
+// Initialize the Express app
 const app = express();
-app.use(cors()); 
-app.use(express.json()); 
 
-// ==========================================
-// DATABASE CONNECTION 
-// ==========================================
+// Middleware
+app.use(cors()); // Allows your frontend to talk to this backend
+app.use(express.json()); // Allows the server to understand JSON data from submissions
+
+// Database Connection (TiDB Serverless Cloud)
+// Using createPool is highly recommended for cloud hosting to manage multiple connections
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root', 
-    password: 'Diviz@03', // <--- Your password is now locked in!
+    host: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com',
+    port: 4000,
+    user: '2tWXBh7eYnHX4xS.root', // Replace with your TiDB user
+    password: 'tewgGcssjX21zlYB',       // Replace with your saved password
     database: 'NanoKineticsDB',
+    ssl: {
+        rejectUnauthorized: false
+    },
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-// Startup Check
-db.getConnection()
-    .then(connection => {
-        console.log('✅ Successfully connected to the NanoKineticsDB MySQL database!');
+// Verify Connection on Startup
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error('Database connection failed:', err.message);
+    } else {
+        console.log('Successfully connected to TiDB Cloud!');
         connection.release();
-    })
-    .catch(err => {
-        console.error('❌ CRITICAL ERROR: MySQL Connection Failed!', err.message);
-    });
+    }
+});
 
 // ==========================================
-// API ROUTES
+//                 API ROUTES
 // ==========================================
 
-app.get('/', (req, res) => res.send('NanoKinetics API is online!'));
-
-// GET: Fetch Approved Data
-app.get('/api/nanozymes', async (req, res) => {
-    try {
-        const query = `
-            SELECT k.AssayID as id, n.Material as material, n.Shape as shape, 
-                   s.SubstrateName as substrate, k.Vmax as vmax, k.Km as km, 
-                   k.pH_Level as ph, k.Temp_C as temp, n.StructureSource as source, n.StructureID as structureId
-            FROM KINETIC_ASSAYS k JOIN NANOZYMES n ON k.NanozymeID = n.NanozymeID
-            JOIN SUBSTRATES s ON k.SubstrateID = s.SubstrateID WHERE k.ApprovalStatus = 'Approved'
-        `;
-        const [rows] = await db.execute(query);
-        res.status(200).json(rows);
-    } catch (error) { res.status(500).json({ error: 'Database fetch failed' }); }
-});
-
-// POST: Submit New Data
-app.post('/api/submissions', async (req, res) => {
-    const { material, shape, substrate, vmax, km, ph, temp, structureType, structureId } = req.body;
-    try {
-        const [nzResult] = await db.execute(
-            `INSERT INTO NANOZYMES (Material, Shape, StructureSource, StructureID) VALUES (?, ?, ?, ?)`,
-            [material, shape, structureType || 'None', structureId || null]
-        );
-        let subId = 1; 
-        if (substrate.toUpperCase() === 'DAB') subId = 2; 
-        if (substrate.toUpperCase() === 'H2O2') subId = 3;
-        
-        await db.execute(
-            `INSERT INTO KINETIC_ASSAYS (NanozymeID, SubstrateID, Vmax, Km, pH_Level, Temp_C) VALUES (?, ?, ?, ?, ?, ?)`,
-            [nzResult.insertId, subId, vmax, km, ph, temp]
-        );
-        res.status(201).json({ message: 'Submission successful.' });
-    } catch (error) { res.status(500).json({ error: 'Submission failed.' }); }
-});
-
-// GET: Fetch Pending Queue for Admin
-app.get('/api/curation/pending', async (req, res) => {
-    try {
-        const query = `
-            SELECT k.AssayID as id, n.Material as material, s.SubstrateName as substrate, 
-                   k.Vmax as vmax, k.Km as km, k.pH_Level as ph, k.Temp_C as temp
-            FROM KINETIC_ASSAYS k JOIN NANOZYMES n ON k.NanozymeID = n.NanozymeID
-            JOIN SUBSTRATES s ON k.SubstrateID = s.SubstrateID WHERE k.ApprovalStatus = 'Pending'
-        `;
-        const [rows] = await db.execute(query);
-        res.status(200).json(rows);
-    } catch (error) { res.status(500).json({ error: 'Failed to fetch queue.' }); }
-});
-
-// PUT: Admin Approve/Reject Data
-app.put('/api/curation/:id', async (req, res) => {
-    try {
-        if (req.body.action === 'Approved') {
-            await db.execute(`UPDATE KINETIC_ASSAYS SET ApprovalStatus = 'Approved' WHERE AssayID = ?`, [req.params.id]);
-        } else if (req.body.action === 'Rejected') {
-            await db.execute(`DELETE FROM KINETIC_ASSAYS WHERE AssayID = ?`, [req.params.id]);
+// 1. GET Endpoint: Fetch live data for the public search portal
+// (Assuming your main table is 'kinetic_data'. Adjust the table name if your schema is different.)
+app.get('/api/nanozymes', (req, res) => {
+    // Only fetch data that the admin has officially approved
+    const sqlQuery = 'SELECT * FROM kinetic_data WHERE status = "Approved"';
+    
+    db.query(sqlQuery, (err, results) => {
+        if (err) {
+            console.error('Error fetching from database:', err);
+            return res.status(500).json({ error: 'Failed to retrieve database records' });
         }
-        res.status(200).json({ message: `Success.` });
-    } catch (error) { res.status(500).json({ error: 'Action failed.' }); }
+        res.json(results);
+    });
 });
 
+// 2. POST Endpoint: Handle new community submissions
+app.post('/api/submit', (req, res) => {
+    // Extract the submitted fields from the frontend form
+    const { material_name, substrate, vmax, km, ph, temp } = req.body;
+    
+    // Insert into the database with a default status of "Pending" for admin review
+    const sqlQuery = 'INSERT INTO kinetic_data (material_name, substrate, vmax, km, ph, temp, status) VALUES (?, ?, ?, ?, ?, ?, "Pending")';
+    
+    db.query(sqlQuery, [material_name, substrate, vmax, km, ph, temp], (err, result) => {
+        if (err) {
+            console.error('Error saving submission:', err);
+            return res.status(500).json({ error: 'Failed to submit data to the database' });
+        }
+        res.status(201).json({ message: 'Submission successful! Added to the pending queue for review.' });
+    });
+});
+
+// ==========================================
+//               SERVER LAUNCH
+// ==========================================
+
+// CRITICAL FOR RENDER: Cloud providers dynamically assign ports. 
+// process.env.PORT tells Render to use its own port, falling back to 3000 only for local testing.
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`\n🚀 NanoKinetics API is running on http://localhost:${PORT}`));
+
+app.listen(PORT, () => {
+    console.log(`NanoKineticsDB Server is live and listening on port ${PORT}`);
+});
