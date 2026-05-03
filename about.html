@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About NanoKineticsDB</title>
+    <style>
+        /* Base Styles */
+        body {
+            background-color: #ADD8E6; 
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        header {
+            width: 100%;
+            background-color: #003366;
+            color: white;
+            padding: 15px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 25px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #00509E;
+            border: 2px solid white;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #08f08c;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(7, 228, 136, 0.3);
+        }
+
+        /* About Page Specific Content Box */
+        .about-content {
+            width: 80%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: left; 
+            line-height: 1.6;
+        }
+
+        .about-content h1 {
+            color: #002244;
+            text-align: center;
+            border-bottom: 2px solid #00509E;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .about-content h2 {
+            color: #003366;
+            margin-top: 30px;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            width: 100%;
+            background-color: #003366;
+            color: white;
+            padding: 20px 0;
+            box-sizing: border-box;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        footer h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #ADD8E6;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #ADD8E6;
+            text-decoration: underline;
+        }
+
+        .copyright {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 15px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>JIIT - Noida</header>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <button onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+
+    <!-- Main About Content -->
+    <div class="about-content">
+        <h1>About NanoKinetics DB</h1>
+        <p>NKDB is a specialized Database Management System designed to store nanozymes with their kinetic activity alongside various substrates[cite: 1].</p>
+        
+        <h2>What is a Nanozyme?</h2>
+        <p>A nanozyme is a physical nanomaterial characterized by its specific material composition, size, and shape[cite: 1]. These entities act as catalysts that interact with various chemical substrates to drive reactions[cite: 1]. The efficiency of a nanozyme is measured through its kinetic parameters—specifically, its maximum rate of reaction (V<sub>max</sub>) and its binding affinity to a substrate (K<sub>m</sub>) under defined experimental conditions like temperature and pH[cite: 1]. Because a single nanozyme can react with multiple different substrates, and vice versa, their experimental behavior forms complex many-to-many relationships that this database is designed to structure and standardize[cite: 1].</p>
+
+        <h2>The Challenge & Our Solution</h2>
+        <p><strong>The Problem:</strong> Essential scientific knowledge regarding physical properties and experimental results currently remains fragmented across spreadsheets and publications with no unified access point[cite: 1].</p>
+        
+        <p><strong>Our Solution:</strong> A centralized, transactional SQL database that normalizes physical, chemical, and kinetic parameters within a single relational framework[cite: 1]. It is built utilizing a robust 3-Tier Architecture featuring a secure backend API and an interactive client interface[cite: 1].</p>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <h3>Contact Us</h3>
+            <p>
+                Email: 
+                <a href="mailto:2509280010@jiit.mail.ac.in">2509280010@jiit.mail.ac.in</a> | 
+                <a href="mailto:2509280005@jiit.mail.ac.in">2509280005@jiit.mail.ac.in</a>
+            </p>
+        </div>
+        <div class="copyright">
+            &copy; All rights reserved to Adarsh and Divyanshu
+        </div>
+    </footer>
+
+</body>
+</html>

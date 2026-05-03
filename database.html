@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database - NanoKineticsDB</title>
+    <style>
+        /* Base Styles */
+        body {
+            background-color: #ADD8E6; 
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        header {
+            width: 100%;
+            background-color: #003366;
+            color: white;
+            padding: 15px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 25px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button.nav-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #00509E;
+            border: 2px solid white;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        button.nav-btn:hover {
+            background-color: #08f08c;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(7, 228, 136, 0.3);
+            color: #003366;
+        }
+
+        /* Database Container */
+        .db-container {
+            width: 95%;
+            max-width: 1300px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            text-align: left;
+        }
+
+        .db-container h2 {
+            color: #002244;
+            text-align: center;
+            border-bottom: 2px solid #00509E;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Search Bar */
+        .search-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #searchInput {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 2px solid #00509E;
+            border-radius: 25px;
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        #searchInput:focus {
+            box-shadow: 0 0 8px rgba(0, 80, 158, 0.5);
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+        }
+
+        th, td {
+            padding: 14px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #003366;
+            color: white;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #e2f0fb; }
+
+        /* Structure Buttons */
+        .struct-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+            color: white;
+            white-space: nowrap;
+        }
+        
+        .struct-btn:hover { opacity: 0.8; }
+        .btn-pdb { background-color: #1976D2; } /* Blue for PDB */
+        .btn-alpha { background-color: #388E3C; } /* Green for AlphaFold */
+        .no-struct { color: #888; font-style: italic; font-size: 0.9rem; }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            width: 100%;
+            background-color: #003366;
+            color: white;
+            padding: 20px 0;
+        }
+
+        .footer-content { display: flex; flex-direction: column; gap: 10px; }
+        footer h3 { margin: 0; font-size: 1.2rem; color: #ADD8E6; }
+        footer a { color: white; text-decoration: none; }
+        footer a:hover { color: #ADD8E6; text-decoration: underline; }
+        .copyright { margin-top: 10px; font-size: 0.85rem; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; width: 80%; margin-left: auto; margin-right: auto; }
+    </style>
+</head>
+<body>
+
+    <header>JIIT - Noida</header>
+
+    <!-- Clean Navigation -->
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="window.location.href='index.html'">Back to Home</button>
+        <button class="nav-btn" onclick="window.location.href='about.html'">About Section</button>
+        <button class="nav-btn" onclick="window.location.href='submit.html'">Submit New Data</button>
+    </div>
+
+    <!-- Main Database Interface -->
+    <div class="db-container">
+        <h2>NanoKinetics Global Database</h2>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by Material, Substrate, or Shape...">
+            <span style="color: #666; font-weight: bold; font-size: 1.1rem;" id="rowCount">Connecting to database API...</span>
+        </div>
+
+        <div class="table-responsive">
+            <table id="nanoTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Material</th>
+                        <th>Shape</th>
+                        <th>Substrate</th>
+                        <th>V<sub>max</sub> (M/s)</th>
+                        <th>K<sub>m</sub> (mM)</th>
+                        <th>pH</th>
+                        <th>Temp (°C)</th>
+                        <th>3D Structure</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be populated here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <h3>Contact Us</h3>
+            <p>
+                Email: <a href="mailto:2509280010@jiit.mail.ac.in">2509280010@jiit.mail.ac.in</a> | 
+                <a href="mailto:2509280005@jiit.mail.ac.in">2509280005@jiit.mail.ac.in</a>
+            </p>
+        </div>
+        <div class="copyright">&copy; All rights reserved to Adarsh and Divyanshu</div>
+    </footer>
+
+    <!-- Database Rendering Logic -->
+    <script>
+        // Global variable to hold our live data for the search filter
+        let dbData = [];
+
+        // Function to render the table dynamically
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = ''; 
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 20px;">No matching records found.</td></tr>';
+                document.getElementById('rowCount').innerText = 'Showing 0 records';
+                return;
+            }
+
+            data.forEach(row => {
+                // Determine the Structure Button HTML
+                let structureHtml = '';
+                if (row.structureId) {
+                    // Check if it's an AlphaFold ID or PDB ID based on the string prefix
+                    if (row.structureId.startsWith('AF-')) {
+                        structureHtml = `<button class="struct-btn btn-alpha" onclick="fetchStructure('AlphaFold', '${row.structureId}')">AlphaFold</button>`;
+                    } else {
+                        structureHtml = `<button class="struct-btn btn-pdb" onclick="fetchStructure('PDB', '${row.structureId}')">PDB: ${row.structureId}</button>`;
+                    }
+                } else {
+                    structureHtml = `<span class="no-struct">N/A</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: #666; font-size: 0.9rem;">NK-${row.id.toString().padStart(3, '0')}</td>
+                    <td style="font-weight: bold; color: #003366;">${row.material}</td>
+                    <td>${row.shape}</td>
+                    <td>${row.substrate}</td>
+                    <td>${Number(row.vmax).toFixed(4)}</td>
+                    <td>${Number(row.km).toFixed(4)}</td>
+                    <td>${Number(row.ph).toFixed(1)}</td>
+                    <td>${row.temp}</td>
+                    <td>${structureHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('rowCount').innerText = `Showing ${data.length} records`;
+        }
+
+        // Search/Filter Function
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filteredData = dbData.filter(row => {
+                return row.material.toLowerCase().includes(query) || 
+                       row.substrate.toLowerCase().includes(query) ||
+                       row.shape.toLowerCase().includes(query) ||
+                       (row.structureId && row.structureId.toLowerCase().includes(query));
+            });
+            
+            renderTable(filteredData);
+        }
+
+        // Mock Fetch Function for 3D Structures
+        function fetchStructure(source, id) {
+            if (source === 'PDB') {
+                alert(`Redirecting to RCSB PDB for structural file: ${id}`);
+                // Real implementation: window.open(`https://www.rcsb.org/structure/${id}`, '_blank');
+            } else if (source === 'AlphaFold') {
+                alert(`Redirecting to AlphaFold Protein Structure Database for: ${id}`);
+                // Real implementation: window.open(`https://alphafold.ebi.ac.uk/entry/${id.split('-')[1]}`, '_blank');
+            }
+        }
+
+        // LIVE FETCH: Pull data from your Node.js API when the page loads!
+        window.onload = async () => {
+            try {
+                // Call your local server
+                const response = await fetch('http://localhost:3000/api/nanozymes');
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                // Convert the response to JSON and store it
+                dbData = await response.json();
+                
+                // Render the table with the real database rows!
+                renderTable(dbData);
+                
+            } catch (error) {
+                console.error("Error loading database:", error);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; color: red; font-weight: bold; padding: 20px;">Failed to connect to the database API.<br><br><span style="font-size:0.9rem; color:#666; font-weight:normal;">Ensure your Node.js server (server.js) is running in the terminal and MySQL is active.</span></td></tr>';
+                document.getElementById('rowCount').innerText = 'Connection Error';
+            }
+        };
+    </script>
+</body>
+</html>
