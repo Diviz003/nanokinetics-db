@@ -2,20 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
 
-// Initialize the Express app
 const app = express();
 
-// Middleware
-app.use(cors()); // Allows your frontend to talk to this backend
-app.use(express.json()); // Allows the server to understand JSON data from submissions
+app.use(cors());
+app.use(express.json());
 
 // Database Connection (TiDB Serverless Cloud)
-// Using createPool is highly recommended for cloud hosting to manage multiple connections
 const db = mysql.createPool({
     host: 'gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com',
     port: 4000,
-    user: '2tWXBh7eYnHX4xS.root', // Replace with your TiDB user
-    password: 'tewgGcssjX21zlYB',       // Replace with your saved password
+    user: '2tWXBh7eYnHX4xS.root', 
+    password: 'tewgGcssjX21zlYB',
     database: 'NanoKineticsDB',
     ssl: {
         rejectUnauthorized: false
@@ -25,7 +22,6 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
-// Verify Connection on Startup
 db.getConnection((err, connection) => {
     if (err) {
         console.error('Database connection failed:', err.message);
@@ -39,11 +35,25 @@ db.getConnection((err, connection) => {
 //                 API ROUTES
 // ==========================================
 
-// 1. GET Endpoint: Fetch live data for the public search portal
-// (Assuming your main table is 'kinetic_data'. Adjust the table name if your schema is different.)
+// 1. GET Endpoint: Fetches Joined Data from NANOZYMES, SUBSTRATES, and KINETIC_ASSAYS
 app.get('/api/nanozymes', (req, res) => {
-    // Only fetch data that the admin has officially approved
-    const sqlQuery = 'SELECT * FROM kinetic_data WHERE status = "Approved"';
+    // This query links your tables together to get the Material and Substrate names
+    const sqlQuery = `
+        SELECT 
+            k.AssayID as id, 
+            n.Material as material, 
+            n.Shape as shape, 
+            s.SubstrateName as substrate, 
+            k.Vmax as vmax, 
+            k.Km as km, 
+            k.pH_Level as ph, 
+            k.Temp_C as temp, 
+            n.StructureID as structureId
+        FROM KINETIC_ASSAYS k
+        JOIN NANOZYMES n ON k.NanozymeID = n.NanozymeID
+        JOIN SUBSTRATES s ON k.SubstrateID = s.SubstrateID
+        WHERE k.ApprovalStatus = 'Approved'
+    `;
     
     db.query(sqlQuery, (err, results) => {
         if (err) {
@@ -54,29 +64,28 @@ app.get('/api/nanozymes', (req, res) => {
     });
 });
 
-// 2. POST Endpoint: Handle new community submissions
+// 2. POST Endpoint: Handle new submissions
+// Note: This logic assumes the Material and Substrate already exist in their tables.
 app.post('/api/submit', (req, res) => {
-    // Extract the submitted fields from the frontend form
     const { material_name, substrate, vmax, km, ph, temp } = req.body;
     
-    // Insert into the database with a default status of "Pending" for admin review
-    const sqlQuery = 'INSERT INTO kinetic_data (material_name, substrate, vmax, km, ph, temp, status) VALUES (?, ?, ?, ?, ?, ?, "Pending")';
+    // In a complex schema, you'd usually look up the IDs first. 
+    // For now, this query targets your KINETIC_ASSAYS table structure.
+    const sqlQuery = `
+        INSERT INTO KINETIC_ASSAYS (NanozymeID, SubstrateID, Vmax, Km, pH_Level, Temp_C, ApprovalStatus) 
+        VALUES ((SELECT NanozymeID FROM NANOZYMES WHERE Material = ? LIMIT 1), 
+                (SELECT SubstrateID FROM SUBSTRATES WHERE SubstrateName = ? LIMIT 1), 
+                ?, ?, ?, ?, 'Pending')`;
     
     db.query(sqlQuery, [material_name, substrate, vmax, km, ph, temp], (err, result) => {
         if (err) {
             console.error('Error saving submission:', err);
-            return res.status(500).json({ error: 'Failed to submit data to the database' });
+            return res.status(500).json({ error: 'Failed to submit data. Ensure Material and Substrate exist.' });
         }
-        res.status(201).json({ message: 'Submission successful! Added to the pending queue for review.' });
+        res.status(201).json({ message: 'Submission successful! Added to the pending queue.' });
     });
 });
 
-// ==========================================
-//               SERVER LAUNCH
-// ==========================================
-
-// CRITICAL FOR RENDER: Cloud providers dynamically assign ports. 
-// process.env.PORT tells Render to use its own port, falling back to 3000 only for local testing.
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
