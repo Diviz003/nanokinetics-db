@@ -250,16 +250,19 @@
                     structureHtml = `<span class="no-struct">N/A</span>`;
                 }
 
+                // Fallback to row.material_name if row.material is undefined from the database
+                const materialName = row.material || row.material_name || 'Unknown';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: #666; font-size: 0.9rem;">NK-${row.id.toString().padStart(3, '0')}</td>
-                    <td style="font-weight: bold; color: #003366;">${row.material}</td>
-                    <td>${row.shape}</td>
-                    <td>${row.substrate}</td>
-                    <td>${Number(row.vmax).toFixed(4)}</td>
-                    <td>${Number(row.km).toFixed(4)}</td>
-                    <td>${Number(row.ph).toFixed(1)}</td>
-                    <td>${row.temp}</td>
+                    <td style="color: #666; font-size: 0.9rem;">NK-${row.id ? row.id.toString().padStart(3, '0') : '000'}</td>
+                    <td style="font-weight: bold; color: #003366;">${materialName}</td>
+                    <td>${row.shape || 'N/A'}</td>
+                    <td>${row.substrate || 'N/A'}</td>
+                    <td>${row.vmax ? Number(row.vmax).toFixed(4) : 'N/A'}</td>
+                    <td>${row.km ? Number(row.km).toFixed(4) : 'N/A'}</td>
+                    <td>${row.ph ? Number(row.ph).toFixed(1) : 'N/A'}</td>
+                    <td>${row.temp || 'N/A'}</td>
                     <td>${structureHtml}</td>
                 `;
                 tbody.appendChild(tr);
@@ -273,9 +276,10 @@
             const query = document.getElementById('searchInput').value.toLowerCase();
             
             const filteredData = dbData.filter(row => {
-                return row.material.toLowerCase().includes(query) || 
-                       row.substrate.toLowerCase().includes(query) ||
-                       row.shape.toLowerCase().includes(query) ||
+                const matName = row.material || row.material_name || '';
+                return matName.toLowerCase().includes(query) || 
+                       (row.substrate && row.substrate.toLowerCase().includes(query)) ||
+                       (row.shape && row.shape.toLowerCase().includes(query)) ||
                        (row.structureId && row.structureId.toLowerCase().includes(query));
             });
             
@@ -296,8 +300,8 @@
         // LIVE FETCH: Pull data from your Node.js API when the page loads!
         window.onload = async () => {
             try {
-                // Call your local server
-                const response = await fetch('http://localhost:3000/api/nanozymes');
+                // Call your live cloud server
+                const response = await fetch('https://nanokinetics-db.onrender.com/api/nanozymes');
                 
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -311,7 +315,7 @@
                 
             } catch (error) {
                 console.error("Error loading database:", error);
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; color: red; font-weight: bold; padding: 20px;">Failed to connect to the database API.<br><br><span style="font-size:0.9rem; color:#666; font-weight:normal;">Ensure your Node.js server (server.js) is running in the terminal and MySQL is active.</span></td></tr>';
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; color: red; font-weight: bold; padding: 20px;">Failed to connect to the cloud database API.<br><br><span style="font-size:0.9rem; color:#666; font-weight:normal;">Ensure your Render server is live.</span></td></tr>';
                 document.getElementById('rowCount').innerText = 'Connection Error';
             }
         };
