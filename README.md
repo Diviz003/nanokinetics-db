@@ -1,6 +1,6 @@
 # NanoKineticsDB (Public Beta)
 
-🌐 **Live Portal:** [Insert Your Vercel Link Here]
+🌐 **Live Portal:** 
 
 ## About The Project
 **NanoKineticsDB** is a specialized Database Management System (DBMS) designed to centralize and standardize kinetic data for nanozymes. Nanozymes are artificial nanomaterials exhibiting enzyme-like characteristics. Understanding their catalytic efficiency—specifically measured through Michaelis-Menten kinetic parameters like maximum velocity (Vmax) and binding affinity (Km)—is critical for advancing biotechnology, targeted drug delivery, and environmental remediation. 
